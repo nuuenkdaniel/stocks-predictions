@@ -2,6 +2,7 @@ import kagglehub
 import os 
 import pandas as pd 
 import numpy as np 
+import sys 
 
 def load_data(load_agreements=False): 
     '''
@@ -40,6 +41,8 @@ def data_process(load_agreements=False):
     # col 1: news text 
     # 4846 x 2 
     # 2879 neutral, 1363 positive, 604 negative 
+    # longest news: 315 words 
+    # shortest news: 9 words 
     df = pd.read_csv(data_path, encoding='latin-1', header=None, names=["sentiment", "news"]) 
 
     ''' 
@@ -47,21 +50,31 @@ def data_process(load_agreements=False):
     neutral= 0 
     positive=0 
     neg= 0 
+    max_length=0 
+    min_length= sys.maxsize 
+    max_news=""
 
     # iterate thorugh each row as an Object 
     for row in df.itertuples(): 
         sent = row.sentiment 
+        text= row.news 
         if (sent=="neutral"): 
             neutral +=1 
         elif (sent== "negative"):
             neg +=1 
         else: 
             positive+=1 
+        if (len(text)>max_length):
+            max_length= len(text)
+            max_news= text 
+        min_length= min(min_length, len(text))
     print(neutral)
     print(positive)
     print(neg)
+    print(f"Longest news length: {max_length}")
+    print(max_news)
+    print(f"shortest news length: {min_length}")
     ''' 
-
     
 
 if __name__ == "__main__": 

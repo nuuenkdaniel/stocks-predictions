@@ -2,16 +2,15 @@ import sys
 import pandas as pd
 import re
 
-
 # Expects CSV
 class Tokenizer:
     def __init__(self, file):
         self.file = file
 
     def clean_data(self)-> pd.DataFrame:
-        df = pd.read_csv(self.file, encoding='ISO-8859-1', header=None, names=['label', 'headline'])
+        df = pd.read_csv(self.file, encoding="ISO-8859-1", header=None, names=["label", "headline"])
         df = df.dropna().reset_index(drop=True)
-        df["label"] = df["label"].map({'negative': 0, 'neutral': 1, 'positive': 2}) # type: ignore
+        df["label"] = df["label"].map({"negative": 0, "neutral": 1, "positive": 2}) # type: ignore
         return df
 
     def _tokenize(self, text: str) -> list[str]:

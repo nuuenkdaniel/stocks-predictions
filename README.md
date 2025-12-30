@@ -1,5 +1,5 @@
 # stocks-predictions
-
+- trying out AI models training (NLP) on stocks, market related dataset 
 
 ## Datasets 
 - [sentiment analysis for financial market events 2025 (656kb)](https://www.kaggle.com/datasets/pratyushpuri/financial-news-market-events-dataset-2025)
@@ -11,7 +11,9 @@
 
 ## Steps 
 - first try with Sentiment Analysis for news (650 kb), then use the stock news sentiment analysis, then combine both datasets. 
-- compare results of both training
+- compare results of both training using K-fold validation 
+
+
 
 ## Models 
 - RNN (LSTM) model 

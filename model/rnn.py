@@ -48,7 +48,9 @@ class LSTM(nn.Module):
         we will input the tokenized inputs from the tokenizer from different batches 
             - embedded into hidden dimension to capture semantic information 
             - padded to make every sentence in the batch into the same size (matrix multiplication requires a rectangle shape)
-            
+        
+        @param ids: padded_token_ids of the news (batch_size x max_seq_length)
+        @param lengths: original length of the news before padding 
 
         Padding: 
             - each sentence becomes the same size (largest sentence of the batch) 
@@ -58,7 +60,7 @@ class LSTM(nn.Module):
         
         '''
         # first embed the input token ids 
-        embedded =self.embedding(ids) 
+        embedded =self.embedding(ids)   # (batch_size, max_seq_len, embed_dim)
         
 
         # pack the inputs so that LSTM can process and know to stop before the PAD 

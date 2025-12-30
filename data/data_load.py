@@ -1,8 +1,8 @@
 import kagglehub
 import os 
-import pandas as pd 
-import numpy as np 
+import pandas as pd  
 import torch 
+import sys 
 from torch.utils.data import DataLoader, random_split 
 from .custom_loader import SentimentDataset, collate_fn 
 
@@ -48,14 +48,15 @@ def data_process(batch_size, train_size=0.8, test_size=0.2, seed=42, load_agreem
     df = pd.read_csv(data_path, encoding='latin-1', header=None, names=["sentiment", "news"]) 
 
     # transform sentiment to numerical value 
-    # neutral: 0, pos: 1, neg: -1 
-    label_map= {"neutral":0, "positive":1, "negative":-1}
+    # neutral: 0, neg: 1, pos: 2 
+    label_map= {"neutral":0, "positive":2, "negative":1}
     sentiment= (df["sentiment"].map(label_map))
     sentiment = sentiment.tolist() 
     news= (df["news"].tolist()) 
 
     # take non-torch.Tensor and create a dataset 
     dataset= SentimentDataset(news, sentiment) 
+    vocab_size= dataset.get_vocab_size() 
 
     # split into train and test set size 
     train_size = int(train_size* len(dataset)) 
@@ -68,6 +69,7 @@ def data_process(batch_size, train_size=0.8, test_size=0.2, seed=42, load_agreem
                                     generator=torch.Generator().manual_seed(seed) # reproducibility with manual seed
                                     )
 
+
     train_loader= DataLoader(train_set, 
                             batch_size=batch_size, 
                             collate_fn=collate_fn, 
@@ -79,7 +81,7 @@ def data_process(batch_size, train_size=0.8, test_size=0.2, seed=42, load_agreem
                             collate_fn=collate_fn,
                             shuffle=True
                             )
-    return train_loader, test_loader
+    return train_loader, test_loader, vocab_size 
 
 
     

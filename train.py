@@ -15,7 +15,10 @@ import os
 os.environ["TOKENIZERS_PARALLELISM"]= "false"  
 
 from data.data_load import data_process 
-from model.rnn import LSTM 
+from model.rnn import LSTM
+import torch  
+import torch.nn as nn 
+import time 
 
 # here holds the hyperparameters for our model (global variable for our design)
 # these parameters are mainly for model training (constructor params, training loop)
@@ -26,6 +29,8 @@ hyperparams= {
     "output_dim": 3,    # we have 3 classes of labels to predict (neutral, pos, neg)
     "epochs": 5,        # number of times the model trains over the entire set 
     "batch_size": 32,   # batch size of each data training batch 
+    "learning_rate": 0.001,  # learning rate of gradient descent 
+
 }
 
 ''' 
@@ -42,16 +47,50 @@ Another way of looking at underfitting is our likelihood approximation doesn't m
 
 def train_loop(): 
     # create the data 
-    train_loader, test_loader= data_process(batch_size=hyperparams["batch_size"])
+    # (token_ids, labels, lengths) 
+    # batch_size x max_seq_len 
+    start_time= time.time() 
+    train_loader, _, vocab_size= data_process(batch_size=hyperparams["batch_size"])
     print("-----loader created-----")
 
-
-
     # intialize model 
-    # model = LSTM(n_layers=hyperparams["n_layers"],
-    #             embed_dim=hyperparams["embed_dim"],
-    #             hidden_dim=hyperparams["hidden_dim"],
-    #             output_dim=hyperparams["output_dim"])
+    train_start= time.time() 
+    model = LSTM(n_layers=hyperparams["n_layers"],
+                embed_dim=hyperparams["embed_dim"],
+                hidden_dim=hyperparams["hidden_dim"],
+                output_dim=hyperparams["output_dim"],
+                vocab_size=vocab_size)
+    
+    print(f"Model trainable parameter count: {sum(p.numel() for p in model.parameters() if p.requires_grad)}")
+    # create optimizer 
+    optimizer= torch.optim.Adam(params=model.parameters(), lr=hyperparams["learning_rate"])
+    criterion= nn.CrossEntropyLoss() 
+    
+    # training 
+    for i in range(hyperparams["epochs"]):
+        model.train()   # start training mode 
+        epoch_loss=0 
+
+        for ids, labels, lengths in train_loader: 
+            optimizer.zero_grad()  # clear gradients to recalculate new gradients 
+            prediction= model(ids, lengths) # make prediction 
+            loss= criterion(prediction, labels)     # evaluate loss 
+
+            epoch_loss+= loss.item()   
+
+            loss.backward()  # compute gradient 
+            optimizer.step()    # upate parameters 
+
+        
+        print(f"Epoch {i+1} | Loss: {round(epoch_loss/(len(train_loader)), 3)}")
+
+    train_end= time.time()  
+
+    end_time= time.time() 
+    
+    print(f"Total Training Time (min): {round((train_end-train_start)/60, 3)}")
+    print(f"Total Program Execution Time (min): {round((end_time-start_time)/60, 3)}")
+
 
 if __name__ == "__main__":
     train_loop() 

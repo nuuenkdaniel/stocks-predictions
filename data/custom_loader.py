@@ -43,6 +43,12 @@ class SentimentDataset(Dataset):
             "label": torch.tensor(self.labels[index], dtype=torch.long)
         }
     
+    def get_vocab_size(self): 
+        '''  
+        return the vocab size of the tokenizer 
+        '''
+        return len(self.tokenizer)
+    
 
 def collate_fn(batch): 
     '''  

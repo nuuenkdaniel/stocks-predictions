@@ -4,6 +4,7 @@
 
 import torch 
 import torch.nn as nn 
+from torch.nn.utils.rnn import pack_padded_sequence
 
 class LSTM(nn.Module): 
     # constructor, take the hyperparameters needed for the layers 
@@ -32,7 +33,8 @@ class LSTM(nn.Module):
                             num_layers=n_layers,
                             batch_first=True, 
                             #bias=True,
-                            #dropout=0.5
+                            #dropout=0.5, 
+                            #bidirectional=True 
                             )
         
         # fully connected network to finalize our predictions 
@@ -40,15 +42,39 @@ class LSTM(nn.Module):
         self.fc = nn.Linear(hidden_dim, output_dim)
 
     # inference (running the model here)
-    def forward(self, x):
-        # first embed the input data 
-        embedded =self.embedding(x) 
+    def forward(self, ids, lengths):
+        '''  
+        forward does the inference of the model 
+        we will input the tokenized inputs from the tokenizer from different batches 
+            - embedded into hidden dimension to capture semantic information 
+            - padded to make every sentence in the batch into the same size (matrix multiplication requires a rectangle shape)
+            
+
+        Padding: 
+            - each sentence becomes the same size (largest sentence of the batch) 
+            - [We, want, cake, PAD=0, PAD=0] 
+            - during processing by the LSTM, the padding will be removed, otherwise the LSTM will process the 0s, causing incorrect outputs 
+
         
+        '''
+        # first embed the input token ids 
+        embedded =self.embedding(ids) 
+        
+
+        # pack the inputs so that LSTM can process and know to stop before the PAD 
+        # saves computational resources because the PAD of each sentence is not processed 
+        padded_embed = pack_padded_sequence(embedded, 
+                                            lengths.cpu(),  # bring to cpu to be processable 
+                                            batch_first=True,
+                                            enforce_sorted=False)
+
+
+    
         # pass through the lstm network 
         # lstm_out is the hidden states of the last layer of every timestep (good for Many to Many)
         # hidden is the final hidden states of every layer from the last timestep (after model processed the entire input)
         # cell is the cell-state (internal cells) of each layer 
-        lstm_out, (hidden, cell) = self.lstm(embedded)
+        padded_lstm_out, (hidden, cell) = self.lstm(padded_embed)
 
         # get the last hidden state to do inference 
         last_hidden = hidden[-1,:,:]

@@ -55,5 +55,18 @@ def collate_fn(batch):
     
     # sort from longest to shortest sentences in the batch 
     batch =sorted(batch, key= lambda x: len(x["token_ids"]), reverse=True)
-    longest= len(batch[0]["token_ids"])
+    
+    ids= [item["token_ids"] for item in batch]
+
+    # Torch.Tensor of corresponding labels 
+    labels= torch.stack([item["label"] for item in batch])
+
+    # retrieve their pre-padding length for RNN to know where padding starts
+    lengths= torch.tensor([len(item["token_ids"]) for item in batch])
+
+    # pad token_ids with 0 
+    padded= pad_sequence(ids, batch_first=True, padding_value=0)
+
+    # what's returned in each batch 
+    return padded, labels, lengths 
     

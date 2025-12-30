@@ -2,7 +2,9 @@ import kagglehub
 import os 
 import pandas as pd 
 import numpy as np 
-import sys 
+import torch 
+from torch.utils.data import DataLoader, random_split 
+from .custom_loader import SentimentDataset, collate_fn 
 
 def load_data(load_agreements=False): 
     '''
@@ -26,7 +28,7 @@ def load_data(load_agreements=False):
         return data_path, None  
     
 
-def data_process(load_agreements=False): 
+def data_process(batch_size, train_size=0.8, test_size=0.2, seed=42, load_agreements=False): 
     '''
     Process the data to be trainable 
     return the completed data in array format  
@@ -44,6 +46,44 @@ def data_process(load_agreements=False):
     # longest news: 315 words 
     # shortest news: 9 words 
     df = pd.read_csv(data_path, encoding='latin-1', header=None, names=["sentiment", "news"]) 
+
+    # transform sentiment to numerical value 
+    # neutral: 0, pos: 1, neg: -1 
+    label_map= {"neutral":0, "positive":1, "negative":-1}
+    sentiment= (df["sentiment"].map(label_map))
+    sentiment = sentiment.tolist() 
+    news= (df["news"].tolist()) 
+
+    # take non-torch.Tensor and create a dataset 
+    dataset= SentimentDataset(news, sentiment) 
+
+    # split into train and test set size 
+    train_size = int(train_size* len(dataset)) 
+    test_size = len(dataset) - train_size 
+
+    # torch.utils.data.Subset object
+    # calls __getItem__, so it's a tuple of (token_ids, label) in torch tensor  
+    train_set, test_set =  random_split(dataset, 
+                                    [train_size, test_size], 
+                                    generator=torch.Generator().manual_seed(seed) # reproducibility with manual seed
+                                    )
+
+    train_loader= DataLoader(train_set, 
+                            batch_size=batch_size, 
+                            collate_fn=collate_fn, 
+                            num_workers=2, 
+                            shuffle=False   # don't shuffle for training
+                            )
+    test_loader= DataLoader(test_set,
+                            batch_size=batch_size,
+                            collate_fn=collate_fn,
+                            shuffle=True
+                            )
+    return train_loader, test_loader
+
+
+    
+
 
     ''' 
     # iterate thorugh dataset to get additional info 

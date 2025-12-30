@@ -8,7 +8,6 @@ This file may not be used in main code, but as tests
 '''
 
 from transformers import AutoTokenizer 
-import torch 
 
 def init_tokenizer(model="bert-base-uncased"): 
     '''

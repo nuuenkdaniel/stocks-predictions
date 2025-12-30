@@ -1,0 +1,57 @@
+'''
+Training Loop/main function of the training process 
+Bridge design pattern :- 
+
+Training takes a few steps: 
+    1. load the data into DataLoader (make them into trainable formats)
+    2. initialize the model with hyperparameters for training 
+    3. establish training loop to train the model with the data provided   
+        - provide loss functions to update model parameters 
+        - log/store training related information that you want 
+    4 (Optional). Save model weights based for future inferences (load pretrained model is done this way)
+'''
+import os 
+# disable parallelization of tokenizer for DataLoader parallelization 
+os.environ["TOKENIZERS_PARALLELISM"]= "false"  
+
+from data.data_load import data_process 
+from model.rnn import LSTM 
+
+# here holds the hyperparameters for our model (global variable for our design)
+# these parameters are mainly for model training (constructor params, training loop)
+hyperparams= {
+    "n_layers": 2, 
+    "hidden_dim": 128,  # usually multiple of 64 
+    "embed_dim": 100, 
+    "output_dim": 3,    # we have 3 classes of labels to predict (neutral, pos, neg)
+    "epochs": 5,        # number of times the model trains over the entire set 
+    "batch_size": 32,   # batch size of each data training batch 
+}
+
+''' 
+hidden dim, embed_dim and n_layer determine our model complexity (same as # of trainable parameters the model has)
+higher complexity gives model more "power" to capture information and perform better 
+but with smaller amount of data, it's a tradeoff between overfitting and underfitting. 
+Overfitting is when we have big model/a lot of training for small amount of data, the model can memorize/create large weights in our parameters to fit each data point better (high variance)
+underfitting is when the model is too simple to fit all the data (think of a straight line going across data split at different locations of this linear line), it doesn't perform well. 
+Another way of looking at underfitting is our likelihood approximation doesn't match the correct Gaussian distribution that generates this data (high bias)
+'''
+
+
+
+
+def train_loop(): 
+    # create the data 
+    train_loader, test_loader= data_process(batch_size=hyperparams["batch_size"])
+    print("-----loader created-----")
+
+
+
+    # intialize model 
+    # model = LSTM(n_layers=hyperparams["n_layers"],
+    #             embed_dim=hyperparams["embed_dim"],
+    #             hidden_dim=hyperparams["hidden_dim"],
+    #             output_dim=hyperparams["output_dim"])
+
+if __name__ == "__main__":
+    train_loop() 

@@ -155,6 +155,6 @@ if __name__ == "__main__":
         model.eval() # Sets model to eval mode
         eval_loss, eval_acc = evaluate(model, eval_df, vocab_dict, criterion, BATCH_SIZE, device)
 
-        print(f"\nEpoch: {epoch}")
-        print(f"    Train: loss={train_loss} | accuracy={train_acc}")
-        print(f"    Validation: loss={eval_loss}  | accuracy={eval_acc}")
+        print(f"Epoch: {epoch+1}")
+        print(f"    Train:      loss={train_loss:.3f} | accuracy={train_acc:.3f}")
+        print(f"    Validation: loss={eval_loss:.3f} | accuracy={eval_acc:.3f}")

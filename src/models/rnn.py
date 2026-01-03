@@ -34,8 +34,8 @@ class biGRU(nn.Module):
         # Convert text batch into lookup table of vectors
         embedded = self.embedding(text)
 
-        # Get the output (Output at each step) and the hidden (the final output)
-        output, hidden = self.gru(embedded)
+        # Ignore the output (Output at each step) and the hidden (the final output)
+        _, hidden = self.gru(embedded)
 
         # Get the forward hidden state
         hidden_for = hidden[-2, :, :]

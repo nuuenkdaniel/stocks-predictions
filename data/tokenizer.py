@@ -1,4 +1,3 @@
-# tokenizer for our dataset 
 # a tokenizer is used to split a group of words into subwords (parts)
 # a correct word is split into itself, but unusual/made-up words/mispelled words will be broken into differnt parts 
 # a pretrained tokenizer is the best since it's trained to split words better than others 
@@ -48,6 +47,13 @@ def tokenize(text:str, tokenizer):
 
     return encoded["input_ids"]
     
+def detokenize(token_ids, tokenizer): 
+    '''  
+    convert tokenized_id back to text 
+    '''
+    return tokenizer.decode(token_ids, skip_special_tokens=True)
+
+
 
 if __name__ == "__main__":
     tokenizer= init_tokenizer()

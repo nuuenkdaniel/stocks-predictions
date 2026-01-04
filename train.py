@@ -20,7 +20,7 @@ import torch
 import torch.nn as nn 
 import time 
 from utils import * 
-from test import test_loop 
+from evaluator import test_loop 
 import model.tokenizers as tokenizers 
 
 # here holds the hyperparameters for our model (global variable for our design)
@@ -32,9 +32,10 @@ hyperparams= {
     "output_dim": 3,    # we have 3 classes of labels to predict (neutral, pos, neg)
     "epochs": 8,        # number of times the model trains over the entire set 
     "batch_size": 64,   # batch size of each data training batch 
-    "learning_rate": 0.01,  # learning rate of gradient descent 
+    "learning_rate": 0.001,  # learning rate of gradient descent 
     "dropOut": 0.5,     # reduce overfitting by randomly setting neurons to 0 weight 
     "weight_decay": 1e-5, 
+    "model": "LSTM"
 }
 
 ''' 
@@ -69,6 +70,8 @@ def train_loop(test=False,
     train_loader, test_loader, vocab_size, train_size, test_size= data_process(batch_size=hyperparams["batch_size"], model=tokenizer_model)
     print(f"Train loader {len(train_loader)} batches | Test loader {len(test_loader)} batches | Batch Size: {hyperparams['batch_size']}")
 
+    hyperparams["vocab_size"]= vocab_size 
+    hyperparams["tokenizer_model"]= tokenizer_model 
 
     embed_weights=None 
     if (pretrain_embed=="bert-base-cased"): 
@@ -76,13 +79,14 @@ def train_loop(test=False,
 
 
     # intialize model 
-    model = LSTM(n_layers=hyperparams["n_layers"],
-                embed_dim=hyperparams["embed_dim"],
-                hidden_dim=hyperparams["hidden_dim"],
-                output_dim=hyperparams["output_dim"],
-                vocab_size=vocab_size,
-                dropOut=hyperparams["dropOut"],
-                embedding_weights=embed_weights)
+    if (hyperparams["model"]=="LSTM"): 
+        model = LSTM(n_layers=hyperparams["n_layers"],
+                    embed_dim=hyperparams["embed_dim"],
+                    hidden_dim=hyperparams["hidden_dim"],
+                    output_dim=hyperparams["output_dim"],
+                    vocab_size=vocab_size,
+                    dropOut=hyperparams["dropOut"],
+                    embedding_weights=embed_weights)
     
 
     print(f"Hyperparameters: \n{hyperparams}")
@@ -123,9 +127,18 @@ def train_loop(test=False,
         test_acc= compute_accuracy(model, test_loader)
         print(f"Test Loss: {test_loss} | Test Accuracy: {test_acc}")
 
+    if (save_weights):
+        timestamp = get_timestamp() 
+        save_model(model, hyperparams, pretrain_embed, test_acc,
+                name=f"{hyperparams["epochs"]} Epochs {hyperparams['model']} Acc={test_acc} | {timestamp}.pt") 
+
     end_time= time.time() 
     print(f"Total Program Execution Time (min): {round((end_time-start_time)/60, 3)}")
 
 
 if __name__ == "__main__":
-    train_loop(validate_epoch=True, tokenizer_model=tokenizers.models["bert-cased"], pretrain_embed=tokenizers.models["bert-cased"]) 
+    train_loop(validate_epoch=True,
+                tokenizer_model=tokenizers.models["bert-cased"], 
+                pretrain_embed=tokenizers.models["bert-cased"], 
+                save_weights=True
+                ) 

@@ -11,9 +11,9 @@ class LSTM(nn.Module):
     def __init__ (self, 
                 n_layers: int,  # number of layers at each time step 
                 embed_dim: int,     # embedding dimension to map word to number 
-                vocab_size: int,    # number of words in each inference to become number 
                 hidden_dim: int,    # hidden dimension (how much information the model can capture)
                 output_dim: int,     # the dimension of output (based on what we are using the model for)
+                vocab_size: int,    # number of words in each inference to become number 
                 dropOut=0, 
                 embedding_weights=None): 
         super().__init__() 
@@ -110,3 +110,4 @@ class LSTM(nn.Module):
 
         # do the final prediction (map the last layer)
         return self.fc(combined)
+    

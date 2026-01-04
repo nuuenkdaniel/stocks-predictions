@@ -83,12 +83,12 @@ def data_process(batch_size,
                             batch_size=batch_size, 
                             collate_fn=collate_fn, 
                             num_workers=2, 
-                            shuffle=False   # don't shuffle for training
+                            shuffle=True   # shuffle training to prevent the model learning the order of the training data 
                             )
     test_loader= DataLoader(test_set,
                             batch_size=batch_size,
                             collate_fn=collate_fn,
-                            shuffle=True
+                            shuffle=False
                             )
     return train_loader, test_loader, vocab_size, train_size, test_size 
 

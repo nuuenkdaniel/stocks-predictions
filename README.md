@@ -10,7 +10,7 @@
 
 
 ## Next Steps 
-- [ ] use pretrained word embedding weights 
+- [ ] look at the incorrect test examples 
 
 
 

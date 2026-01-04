@@ -9,9 +9,8 @@
 - [News-setiment HuggingFace (292mb)](https://huggingface.co/datasets/sehyun66/News-sentiments)
 
 
-## Steps 
-- first try with Sentiment Analysis for news (650 kb), then use the stock news sentiment analysis, then combine both datasets. 
-- compare results of both training using K-fold validation 
+## Next Steps 
+- [ ] use pretrained word embedding weights 
 
 
 
@@ -19,3 +18,9 @@
 - RNN (LSTM & bidirectional LSTM) model 
 - Transformer model (smaller scale GPT2) 
 - Finetune a pre-trained small scale lm from huggingFace 
+
+## Performance 
+- LSTM on Sentiment Analysis  
+    | Epoch | Parameters | Train Loss | Train Acc | Test Loss | Test Acc
+    | ---------- | --------- | -------- | -------- | --------- | -------- |
+    | 112233445  | CS    | 2026 |

@@ -28,7 +28,12 @@ def load_data(load_agreements=False):
         return data_path, None  
     
 
-def data_process(batch_size, train_size=0.8, test_size=0.2, seed=42, load_agreements=False): 
+def data_process(batch_size, 
+                 train_size=0.8, 
+                 test_size=0.2, 
+                 seed=42, 
+                 model = "bert-base-cased", 
+                 load_agreements=False): 
     '''
     Process the data to be trainable 
     return the completed data in array format  
@@ -55,17 +60,19 @@ def data_process(batch_size, train_size=0.8, test_size=0.2, seed=42, load_agreem
     news= (df["news"].tolist()) 
 
     # take non-torch.Tensor and create a dataset 
-    dataset= SentimentDataset(news, sentiment) 
+    dataset= SentimentDataset(news, sentiment, model) 
     vocab_size= dataset.get_vocab_size() 
 
     # split into train and test set size 
     train_size = int(train_size* len(dataset)) 
     test_size = len(dataset) - train_size 
 
+    print(f"Tokenizer model: {model} | Vocab Size: {vocab_size}")
     print(f"Training Set Size: {train_size} | Test Set Size: {test_size} News")
 
     # torch.utils.data.Subset object
     # calls __getItem__, so it's a tuple of (token_ids, label) in torch tensor  
+    # same split with the same seed 
     train_set, test_set =  random_split(dataset, 
                                     [train_size, test_size], 
                                     generator=torch.Generator().manual_seed(seed) # reproducibility with manual seed

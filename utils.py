@@ -4,6 +4,7 @@ Contains utility/helper functions for different files
 import matplotlib.pyplot as plt  
 import torch 
 import torch.nn as nn 
+from transformers import BertModel
 
 def plot_train_loss(losses): 
     '''  
@@ -34,3 +35,16 @@ def compute_accuracy(model,loader):
             total+= labels.size(0)
             correct += (predicted==labels).sum().item() 
         return round(correct/total, 3)
+    
+
+def extract_bert_weight(model="bert-base-cased"):
+  
+    bert_model = BertModel.from_pretrained(model)
+
+    # [30522, 768]
+    # Torch Tensor 
+    bert_weights = bert_model.embeddings.word_embeddings.weight.data.clone()
+
+    del bert_model
+
+    return bert_weights 

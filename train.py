@@ -19,21 +19,22 @@ from model.rnn import LSTM
 import torch  
 import torch.nn as nn 
 import time 
-from utils import plot_train_loss, compute_accuracy 
+from utils import * 
 from test import test_loop 
+import model.tokenizers as tokenizers 
 
 # here holds the hyperparameters for our model (global variable for our design)
 # these parameters are mainly for model training (constructor params, training loop)
 hyperparams= {
-    "n_layers": 2, 
-    "hidden_dim": 64,  # usually multiple of 2 
-    "embed_dim": 64, 
+    "n_layers": 1, 
+    "hidden_dim": 32,  # usually multiple of 2 
+    "embed_dim": 32, 
     "output_dim": 3,    # we have 3 classes of labels to predict (neutral, pos, neg)
     "epochs": 8,        # number of times the model trains over the entire set 
-    "batch_size": 32,   # batch size of each data training batch 
+    "batch_size": 64,   # batch size of each data training batch 
     "learning_rate": 0.01,  # learning rate of gradient descent 
-    "dropOut": 0.6,     # reduce overfitting by randomly setting neurons to 0 weight 
-
+    "dropOut": 0.5,     # reduce overfitting by randomly setting neurons to 0 weight 
+    "weight_decay": 1e-5, 
 }
 
 ''' 
@@ -50,6 +51,8 @@ def train_loop(test=False,
             plot_train_loss=False, 
             plot_test_loss= False, 
             save_weights=False,
+            tokenizer_model= "bert-base-cased",
+            pretrain_embed= None 
             ): 
     '''  
     @param test: if we do testing after the training is completed (one time) 
@@ -63,8 +66,14 @@ def train_loop(test=False,
     # (token_ids, labels, lengths) 
     # batch_size x max_seq_len 
     start_time= time.time() 
-    train_loader, test_loader, vocab_size, train_size, test_size= data_process(batch_size=hyperparams["batch_size"])
-    print(f"Train loader {len(train_loader)} batches | Test loader {len(test_loader)} batches")
+    train_loader, test_loader, vocab_size, train_size, test_size= data_process(batch_size=hyperparams["batch_size"], model=tokenizer_model)
+    print(f"Train loader {len(train_loader)} batches | Test loader {len(test_loader)} batches | Batch Size: {hyperparams['batch_size']}")
+
+
+    embed_weights=None 
+    if (pretrain_embed=="bert-base-cased"): 
+        embed_weights= extract_bert_weight()
+
 
     # intialize model 
     model = LSTM(n_layers=hyperparams["n_layers"],
@@ -72,11 +81,16 @@ def train_loop(test=False,
                 hidden_dim=hyperparams["hidden_dim"],
                 output_dim=hyperparams["output_dim"],
                 vocab_size=vocab_size,
-                dropOut=hyperparams["dropOut"])
+                dropOut=hyperparams["dropOut"],
+                embedding_weights=embed_weights)
     
+
+    print(f"Hyperparameters: \n{hyperparams}")
     print(f"Model trainable parameter count: {sum(p.numel() for p in model.parameters() if p.requires_grad)}")
+
+
     # create optimizer 
-    optimizer= torch.optim.Adam(params=model.parameters(), lr=hyperparams["learning_rate"])
+    optimizer= torch.optim.Adam(params=model.parameters(), lr=hyperparams["learning_rate"], weight_decay=hyperparams["weight_decay"])
     criterion= nn.CrossEntropyLoss() 
     
     # training 
@@ -84,29 +98,26 @@ def train_loop(test=False,
         epoch_loss=0 
         model.train()   # start training mode  
         for ids, labels, lengths in train_loader:
-            optimizer.zero_grad()  # clear gradients to recalculate new gradients 
-            prediction= model(ids, lengths) # make prediction 
+            optimizer.zero_grad() 
+            prediction= model(ids, lengths) 
 
-            # accuracy calculation 
             
-            loss= criterion(prediction, labels)     # evaluate loss 
+            loss= criterion(prediction, labels)   
 
             epoch_loss+= loss.item()   
 
-            loss.backward()  # compute gradient 
-            optimizer.step()    # upate parameters 
-
-
+            loss.backward() 
+            optimizer.step()   
         train_acc= compute_accuracy(model, train_loader)
+
         if (validate_epoch):
             test_loss = test_loop(test_loader, model, criterion)
             test_acc= compute_accuracy(model, test_loader)
-            print(f"Epoch {i+1}\n\tAvg Train Loss Per Batch: {round(epoch_loss/(len(train_loader)), 3)} | Train Accuracy: {train_acc} \n\tTest Loss: {test_loss} | Test Accuracy: {test_acc}")
+            print(f"Epoch {i+1}:\n\tAvg Train Loss: {round(epoch_loss/(len(train_loader)), 3)} | Train Accuracy: {train_acc} \n\tAvg Test Loss: {test_loss} | Test Accuracy: {test_acc}")
         else: 
-            print(f"Epoch {i+1}\n\tAvg Train Loss Per Batch: {round(epoch_loss/(len(train_loader)), 3)} | Train Accuracy: {train_acc}")
+            print(f"Epoch {i+1}:\n\tAvg Train Loss: {round(epoch_loss/(len(train_loader)), 3)} | Train Accuracy: {train_acc}")
             
     
-
     if (test and not validate_epoch):
         test_loss= test_loop(test_loader, model, criterion)
         test_acc= compute_accuracy(model, test_loader)
@@ -117,4 +128,4 @@ def train_loop(test=False,
 
 
 if __name__ == "__main__":
-    train_loop(validate_epoch=True) 
+    train_loop(validate_epoch=True, tokenizer_model=tokenizers.models["bert-cased"], pretrain_embed=tokenizers.models["bert-cased"]) 

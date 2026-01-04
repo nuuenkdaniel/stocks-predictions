@@ -16,6 +16,6 @@
 
 
 ## Models 
-- RNN (LSTM) model 
+- RNN (LSTM & bidirectional LSTM) model 
 - Transformer model (smaller scale GPT2) 
 - Finetune a pre-trained small scale lm from huggingFace 

@@ -62,6 +62,8 @@ def data_process(batch_size, train_size=0.8, test_size=0.2, seed=42, load_agreem
     train_size = int(train_size* len(dataset)) 
     test_size = len(dataset) - train_size 
 
+    print(f"Training Set Size: {train_size} | Test Set Size: {test_size} News")
+
     # torch.utils.data.Subset object
     # calls __getItem__, so it's a tuple of (token_ids, label) in torch tensor  
     train_set, test_set =  random_split(dataset, 
@@ -81,7 +83,7 @@ def data_process(batch_size, train_size=0.8, test_size=0.2, seed=42, load_agreem
                             collate_fn=collate_fn,
                             shuffle=True
                             )
-    return train_loader, test_loader, vocab_size 
+    return train_loader, test_loader, vocab_size, train_size, test_size 
 
 
     

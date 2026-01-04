@@ -13,8 +13,8 @@ class LSTM(nn.Module):
                 embed_dim: int,     # embedding dimension to map word to number 
                 vocab_size: int,    # number of words in each inference to become number 
                 hidden_dim: int,    # hidden dimension (how much information the model can capture)
-                output_dim: int     # the dimension of output (based on what we are using the model for)
-                  ): 
+                output_dim: int,     # the dimension of output (based on what we are using the model for)
+                dropOut=0): 
         super().__init__() 
 
         # embedding layer 
@@ -33,7 +33,7 @@ class LSTM(nn.Module):
                             num_layers=n_layers,
                             batch_first=True, 
                             #bias=True,
-                            #dropout=0.5, 
+                            dropout=dropOut, 
                             #bidirectional=True 
                             )
         

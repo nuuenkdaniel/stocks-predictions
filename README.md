@@ -10,7 +10,9 @@
 
 
 ## Next Steps 
-- [ ] look at the incorrect test examples 
+- [ ] feature pruning to prevent overfitting 
+- [ ] compare embedding vector values of semantically related words at different model configs 
+- [ ] design interface to input any text and output prediction ("launch" the model)
 
 
 

@@ -35,6 +35,7 @@ hyperparams= {
     "learning_rate": 0.001,  # learning rate of gradient descent 
     "dropOut": 0.5,     # reduce overfitting by randomly setting neurons to 0 weight 
     "weight_decay": 1e-5, 
+    "l1_lambda": 0.000001, 
     "model": "LSTM"
 }
 
@@ -75,6 +76,7 @@ def train_loop(test=False,
 
     embed_weights=None 
     if (pretrain_embed=="bert-base-cased"): 
+        print(f"Using saved embedding weights: {pretrain_embed}")
         embed_weights= extract_bert_weight()
 
 
@@ -100,19 +102,27 @@ def train_loop(test=False,
     # training 
     for i in range(hyperparams["epochs"]):
         epoch_loss=0 
+        correct =0 
         model.train()   # start training mode  
         for ids, labels, lengths in train_loader:
             optimizer.zero_grad() 
             prediction= model(ids, lengths) 
 
+            # accuracy calculation 
+            _, predicted= torch.max(prediction, dim=1)
+            correct += (predicted==labels).sum().item() 
             
             loss= criterion(prediction, labels)   
+            
+            # L1 norm 
+            # l1_norm = sum(p.abs().sum() for p in model.parameters())
+            # loss += l1_norm * hyperparams["l1_lambda"]
 
             epoch_loss+= loss.item()   
 
             loss.backward() 
             optimizer.step()   
-        train_acc= compute_accuracy(model, train_loader)
+        train_acc= round(correct/train_size, 3)
 
         if (validate_epoch):
             test_loss = test_loop(test_loader, model, criterion)
@@ -130,7 +140,7 @@ def train_loop(test=False,
     if (save_weights):
         timestamp = get_timestamp() 
         save_model(model, hyperparams, pretrain_embed, test_acc,
-                name=f"{hyperparams["epochs"]} Epochs {hyperparams['model']} Acc={test_acc} | {timestamp}.pt") 
+                name=f"{hyperparams["epochs"]} Epochs {hyperparams['model']} Test Acc={test_acc} Train Acc= {train_acc} | {timestamp}.pt") 
 
     end_time= time.time() 
     print(f"Total Program Execution Time (min): {round((end_time-start_time)/60, 3)}")
@@ -140,5 +150,5 @@ if __name__ == "__main__":
     train_loop(validate_epoch=True,
                 tokenizer_model=tokenizers.models["bert-cased"], 
                 pretrain_embed=tokenizers.models["bert-cased"], 
-                save_weights=True
+                save_weights=True   
                 ) 

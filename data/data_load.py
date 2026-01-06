@@ -8,7 +8,7 @@ from .custom_loader import SentimentDataset, collate_fn
 
 def load_data(load_agreements=False): 
     '''
-    return the path to the dataset which can be loaded and processed in diffrent file 
+    return the DataFrame to the dataset which can be loaded and processed in diffrent file 
 
     the dataset contains data (text) and its labels 
     and the files of sentences which have different agreements (FinancialPhraseBank)
@@ -22,39 +22,42 @@ def load_data(load_agreements=False):
     # directory of ['Sentences_66Agree.txt', 'Sentences_AllAgree.txt', 'Sentences_50Agree.txt', 'README.txt', 'License.txt', 'Sentences_75Agree.txt']
     agreement_path = os.path.join(path, "FinancialPhraseBank")
     
+     # col 0: labels (neural, positive, negative)
+    # col 1: news text 
+    # 4846 x 2 
+    # 2879 neutral, 1363 positive, 604 negative 
+    # longest news: 315 words 
+    # shortest news: 9 words 
+    train_df= pd.read_csv(data_path, encoding='latin-1', header=None, names=["sentiment", "news"])  
+    agreement_df=None 
+    
     if (load_agreements): 
-        return data_path, agreement_path
+        agreement_df= pd.read_csv(agreement_path, encoding='latin-1', header=None, names=["sentiment", "news"]) 
     else:
-        return data_path, None  
+        return train_df, agreement_df   
     
 
-def data_process(batch_size, 
+
+def data_process(df:pd.DataFrame, 
+                 batch_size, 
                  train_size=0.8, 
                  test_size=0.2, 
                  seed=42, 
                  model = "bert-base-cased", 
                  load_agreements=False): 
     '''
-    Process the data to be trainable 
+    Process the data to be trainable (dataset and dataLoader)
     return the completed data in array format  
 
     @param load_agreement: whether to load and process data that has different agreement levels 
+    @param pruned_df: DataFrame of the original dataset after feature pruning 
     '''
-    
-    # load data 
-    data_path, agreement_path = load_data(load_agreements)
-
-    # col 0: labels (neural, positive, negative)
-    # col 1: news text 
-    # 4846 x 2 
-    # 2879 neutral, 1363 positive, 604 negative 
-    # longest news: 315 words 
-    # shortest news: 9 words 
-    df = pd.read_csv(data_path, encoding='latin-1', header=None, names=["sentiment", "news"]) 
+    header = df.columns.tolist()
+    assert("sentiment" in header and "news" in header)
 
     # transform sentiment to numerical value 
     # neutral: 0, neg: 1, pos: 2 
-    label_map= {"neutral":0, "positive":2, "negative":1}
+    label_map= {"neutral":0, "negative":1, "positive":2}
     sentiment= (df["sentiment"].map(label_map))
     sentiment = sentiment.tolist() 
     news= (df["news"].tolist()) 
@@ -93,10 +96,10 @@ def data_process(batch_size,
     return train_loader, test_loader, vocab_size, train_size, test_size 
 
 
-    
 
 
-    ''' 
+
+def retrieve_info(df:pd.DataFrame): 
     # iterate thorugh dataset to get additional info 
     neutral= 0 
     positive=0 
@@ -125,7 +128,6 @@ def data_process(batch_size,
     print(f"Longest news length: {max_length}")
     print(max_news)
     print(f"shortest news length: {min_length}")
-    ''' 
     
 
 if __name__ == "__main__": 

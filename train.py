@@ -14,13 +14,14 @@ import os
 # disable parallelization of tokenizer for DataLoader parallelization 
 os.environ["TOKENIZERS_PARALLELISM"]= "false"  
 
-from data.data_load import data_process 
+from data.data_load import data_process, load_data 
 from model.rnn import LSTM
 import torch  
 import torch.nn as nn 
 import time 
 from utils import * 
 from evaluator import test_loop 
+from data.feature_pruning import chi_square_pruning, save_selected_features
 import model.tokenizers as tokenizers 
 
 # here holds the hyperparameters for our model (global variable for our design)
@@ -54,7 +55,8 @@ def train_loop(test=False,
             plot_test_loss= False, 
             save_weights=False,
             tokenizer_model= "bert-base-cased",
-            pretrain_embed= None 
+            pretrain_embed= None, 
+            pruning=False 
             ): 
     '''  
     @param test: if we do testing after the training is completed (one time) 
@@ -68,7 +70,15 @@ def train_loop(test=False,
     # (token_ids, labels, lengths) 
     # batch_size x max_seq_len 
     start_time= time.time() 
-    train_loader, test_loader, vocab_size, train_size, test_size= data_process(batch_size=hyperparams["batch_size"], model=tokenizer_model)
+    df = load_data() 
+
+    # pruning 
+    if (pruning): 
+        selected_features=chi_square_pruning(df)
+        hyperparams["selected_feature"]= ""
+    
+
+    train_loader, test_loader, vocab_size, train_size, test_size= data_process(df, batch_size=hyperparams["batch_size"], model=tokenizer_model)
     print(f"Train loader {len(train_loader)} batches | Test loader {len(test_loader)} batches | Batch Size: {hyperparams['batch_size']}")
 
     hyperparams["vocab_size"]= vocab_size 
@@ -148,7 +158,8 @@ def train_loop(test=False,
 
 if __name__ == "__main__":
     train_loop(validate_epoch=True,
+               pruning=True, 
                 tokenizer_model=tokenizers.models["bert-cased"], 
                 pretrain_embed=tokenizers.models["bert-cased"], 
-                save_weights=True   
+                save_weights=True 
                 ) 

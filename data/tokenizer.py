@@ -8,7 +8,7 @@ This file may not be used in main code, but as tests
 
 from transformers import AutoTokenizer 
 
-def init_tokenizer(model="bert-base-uncased"): 
+def init_tokenizer(model="bert-base-cased"): 
     '''
     initialize the chosen pretrained tokenizer 
     '''
@@ -57,4 +57,8 @@ def detokenize(token_ids, tokenizer):
 
 if __name__ == "__main__":
     tokenizer= init_tokenizer()
-    tokenize("What is this? I want to go home!!!", tokenizer)
+    #print(tokenize("Hello", tokenizer))
+    print(detokenize(101, tokenizer))
+    print(detokenize(102, tokenizer))
+    print(detokenize(8667, tokenizer))
+    print(detokenize(100, tokenizer))

@@ -10,7 +10,9 @@
 
 
 ## Next Steps 
-- [ ] feature pruning to prevent overfitting 
+- [ ] pre-training feature pruning to prevent overfitting 
+    - low-variance feature pruning 
+    - statistical filtering method 
 - [ ] compare embedding vector values of semantically related words at different model configs 
 - [ ] design interface to input any text and output prediction ("launch" the model)
 

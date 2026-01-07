@@ -11,7 +11,7 @@ Training takes a few steps:
     4 (Optional). Save model weights based for future inferences (load pretrained model is done this way)
 '''
 
-from data.data_load import data_process, load_data 
+from data.data_load import process_dataset, load_data 
 from model.rnn import LSTM
 import torch  
 import torch.nn as nn 
@@ -30,8 +30,10 @@ Another way of looking at underfitting is our likelihood approximation doesn't m
 '''
 hyperparams = settings.hyperparams  
 
-def train_loop(test=False, 
-            validate_epoch=False,
+def train_loop(train_loader, test_loader, train_size, test_size, 
+               vocab_size, 
+            test=False, 
+            validate_epoch=True,
             plot_train_loss=False, 
             plot_test_loss= False, 
             save_weights=False,
@@ -47,23 +49,6 @@ def train_loop(test=False,
     @param plot_test_loss: plot the change in test loss
     '''
    
-    # create the data 
-    # (token_ids, labels, lengths) 
-    # batch_size x max_seq_len 
-    df, _ = load_data() 
-
-
-    # pruning 
-    hyperparams["selected_feature"]= ""
-    if (pruning): 
-        feature_path = handle_pruning(df, k=hyperparams["k_pruning"])
-        hyperparams["selected_feature"]= feature_path 
-    
-
-    train_loader, test_loader, vocab_size, train_size, test_size= data_process(df, batch_size=hyperparams["batch_size"], model=tokenizer_model)
-    print(f"Train loader {len(train_loader)} batches | Test loader {len(test_loader)} batches | Batch Size: {hyperparams['batch_size']}")
-
-    hyperparams["vocab_size"]= vocab_size 
     hyperparams["tokenizer_model"]= tokenizer_model 
 
     embed_weights=None 
@@ -135,3 +120,4 @@ def train_loop(test=False,
         save_model(model, hyperparams, pretrain_embed, test_acc,
                 name=f"{hyperparams["epochs"]} Epochs {hyperparams['model']} Test Acc={test_acc} Train Acc= {train_acc} | {timestamp}.pt") 
 
+    return epoch_loss, train_acc, test_loss, test_acc 

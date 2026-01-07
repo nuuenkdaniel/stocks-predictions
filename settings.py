@@ -16,25 +16,9 @@ hyperparams= {
     "learning_rate": 0.001,  # learning rate of gradient descent 
     "dropOut": 0.5,     # reduce overfitting by randomly setting neurons to 0 weight 
     "weight_decay": 1e-5, 
-    "l1_lambda": 0.000001, 
+    "l1_lambda": 1e-6, 
     "model": "LSTM", 
     "k_pruning": 4000,  # number of words to keep during chi-square pruning 
 
 }
-
-# validate at each epoch 
-validate_epoch = True  
-
-# use pruning while processing data 
-pruning=False 
-
-# tokenizer model 
-tokenizer_model=tokenizers.models["bert-cased"]
-
-# pretrain weights for embedding 
-# MUST be the same as the tokenizer model used 
-pretrain_embed=tokenizers.models["bert-cased"]
-
-save_weights= False 
-
 

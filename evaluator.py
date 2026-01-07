@@ -6,7 +6,6 @@ import torch.nn as nn
 import torch.nn.functional as F 
 import pandas as pd 
 import numpy as np 
-from data.tokenizer import detokenize 
 from utils import create_path 
 
 def test_loop(test_loader, model, criterion):
@@ -68,3 +67,27 @@ def extract_test_errors(model, test_loader, tokenizer, fileName):
     
     print("----Error Analysis CSV Created----")
     return df 
+
+
+
+
+
+def create_k_fold_loaders(dataset):
+    '''  
+    create dataloaders for K-fold cross validation's training/testing loops 
+    '''
+    pass 
+
+
+
+def k_fold_validation(k=10): 
+    '''  
+    implementation of the k-fold cross-validation 
+
+    goal: find the best hyperparameters to use that can produce the best model 
+
+    After K-fold cross validation, we get better sense of the model's true performance at specific hyperparam setting (model won't memorize based on the specific order of training data)
+    This gives better approximation of how our model will perform with future data (after deployment), if they come from the same distribution as the data used for training and testing 
+    Becauese of Law of Large Numbers, this approximates the average mean the model sees 
+    '''
+    pass 

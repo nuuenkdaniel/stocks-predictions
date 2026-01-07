@@ -10,37 +10,14 @@ Training takes a few steps:
         - log/store training related information that you want 
     4 (Optional). Save model weights based for future inferences (load pretrained model is done this way)
 '''
-import os 
-# disable parallelization of tokenizer for DataLoader parallelization 
-os.environ["TOKENIZERS_PARALLELISM"]= "false"  
 
-from data.data_load import data_process, load_data 
+
 from model.rnn import LSTM
 import torch  
 import torch.nn as nn 
-import time 
 from utils import * 
 from evaluator import test_loop 
-from data.feature_pruning import chi_square_pruning, save_selected_features, prune_dataset, handle_pruning
-import model.tokenizers as tokenizers 
-
-# here holds the hyperparameters for our model (global variable for our design)
-# these parameters are mainly for model training (constructor params, training loop)
-hyperparams= {
-    "n_layers": 1, 
-    "hidden_dim": 32,  # usually multiple of 2 
-    "embed_dim": 32, 
-    "output_dim": 3,    # we have 3 classes of labels to predict (neutral, pos, neg)
-    "epochs": 8,        # number of times the model trains over the entire set 
-    "batch_size": 64,   # batch size of each data training batch 
-    "learning_rate": 0.001,  # learning rate of gradient descent 
-    "dropOut": 0.5,     # reduce overfitting by randomly setting neurons to 0 weight 
-    "weight_decay": 1e-5, 
-    "l1_lambda": 0.000001, 
-    "model": "LSTM", 
-    "k_pruning": 4000,  # number of words to keep during chi-square pruning 
-
-}
+import settings 
 
 ''' 
 hidden dim, embed_dim and n_layer determine our model complexity (same as # of trainable parameters the model has)
@@ -50,15 +27,14 @@ Overfitting is when we have big model/a lot of training for small amount of data
 underfitting is when the model is too simple to fit all the data (think of a straight line going across data split at different locations of this linear line), it doesn't perform well. 
 Another way of looking at underfitting is our likelihood approximation doesn't match the correct Gaussian distribution that generates this data (high bias)
 '''
+hyperparams = settings.hyperparams  
 
-def train_loop(test=False, 
-            validate_epoch=False,
+def train_loop(train_loader, test_loader, train_size, test_size, 
+            test=False, 
+            validate_epoch=True,
             plot_train_loss=False, 
             plot_test_loss= False, 
             save_weights=False,
-            tokenizer_model= "bert-base-cased",
-            pretrain_embed= None, 
-            pruning=False 
             ): 
     '''  
     @param test: if we do testing after the training is completed (one time) 
@@ -68,28 +44,14 @@ def train_loop(test=False,
     @param plot_test_loss: plot the change in test loss
     '''
    
-    # create the data 
-    # (token_ids, labels, lengths) 
-    # batch_size x max_seq_len 
-    start_time= time.time() 
-    df, _ = load_data() 
+    vocab_size = hyperparams["vocab_size"]
+    tokenizer_model = hyperparams["tokenizer_model"]
+    pretrain_embed= hyperparams["pretrain_embed"]
 
-
-    # pruning 
-    hyperparams["selected_feature"]= ""
-    if (pruning): 
-        feature_path = handle_pruning(df, k=hyperparams["k_pruning"])
-        hyperparams["selected_feature"]= feature_path 
-    
-
-    train_loader, test_loader, vocab_size, train_size, test_size= data_process(df, batch_size=hyperparams["batch_size"], model=tokenizer_model)
-    print(f"Train loader {len(train_loader)} batches | Test loader {len(test_loader)} batches | Batch Size: {hyperparams['batch_size']}")
-
-    hyperparams["vocab_size"]= vocab_size 
-    hyperparams["tokenizer_model"]= tokenizer_model 
 
     embed_weights=None 
     if (pretrain_embed=="bert-base-cased"): 
+        assert(pretrain_embed == tokenizer_model)
         print(f"Using saved embedding weights: {pretrain_embed}")
         embed_weights= extract_bert_weight()
 
@@ -115,6 +77,7 @@ def train_loop(test=False,
     
     # training 
     for i in range(hyperparams["epochs"]):
+        print(f"Epoch {i+1}:") 
         epoch_loss=0 
         correct =0 
         model.train()   # start training mode  
@@ -141,9 +104,9 @@ def train_loop(test=False,
         if (validate_epoch):
             test_loss = test_loop(test_loader, model, criterion)
             test_acc= compute_accuracy(model, test_loader)
-            print(f"Epoch {i+1}:\n\tAvg Train Loss: {round(epoch_loss/(len(train_loader)), 3)} | Train Accuracy: {train_acc} \n\tAvg Test Loss: {test_loss} | Test Accuracy: {test_acc}")
+            print(f"\tAvg Train Loss: {round(epoch_loss/(len(train_loader)), 3)} | Train Accuracy: {train_acc} \n\tAvg Test Loss: {test_loss} | Test Accuracy: {test_acc}")
         else: 
-            print(f"Epoch {i+1}:\n\tAvg Train Loss: {round(epoch_loss/(len(train_loader)), 3)} | Train Accuracy: {train_acc}")
+            print(f"\tAvg Train Loss: {round(epoch_loss/(len(train_loader)), 3)} | Train Accuracy: {train_acc}")
             
     
     if (test and not validate_epoch):
@@ -156,14 +119,4 @@ def train_loop(test=False,
         save_model(model, hyperparams, pretrain_embed, test_acc,
                 name=f"{hyperparams["epochs"]} Epochs {hyperparams['model']} Test Acc={test_acc} Train Acc= {train_acc} | {timestamp}.pt") 
 
-    end_time= time.time() 
-    print(f"Total Program Execution Time (min): {round((end_time-start_time)/60, 3)}")
-
-
-if __name__ == "__main__":
-    train_loop(validate_epoch=True,
-               pruning=False, 
-                tokenizer_model=tokenizers.models["bert-cased"], 
-                pretrain_embed=tokenizers.models["bert-cased"], 
-                save_weights=False  
-                ) 
+    return epoch_loss, train_acc, test_loss, test_acc 

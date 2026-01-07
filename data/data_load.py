@@ -3,7 +3,7 @@ import os
 import pandas as pd  
 import torch 
 import sys 
-from torch.utils.data import DataLoader, random_split 
+from torch.utils.data import DataLoader, Dataset, random_split 
 from .custom_loader import SentimentDataset, collate_fn 
 
 def load_data(load_agreements=False): 
@@ -38,19 +38,15 @@ def load_data(load_agreements=False):
     
 
 
-def data_process(df:pd.DataFrame, 
-                 batch_size, 
-                 train_size=0.8, 
-                 test_size=0.2, 
-                 seed=42, 
+def process_dataset(df:pd.DataFrame,  
                  model = "bert-base-cased", 
                  load_agreements=False): 
     '''
-    Process the data to be trainable (dataset and dataLoader)
+    Step 2 
+    Process the data to be trainable to get dataset 
     return the completed data in array format  
 
     @param load_agreement: whether to load and process data that has different agreement levels 
-    @param pruned_df: DataFrame of the original dataset after feature pruning 
     '''
     header = df.columns.tolist()
     assert("sentiment" in header and "news" in header)
@@ -64,13 +60,26 @@ def data_process(df:pd.DataFrame,
 
     # take non-torch.Tensor and create a dataset 
     dataset= SentimentDataset(news, sentiment, model) 
-    vocab_size= dataset.get_vocab_size() 
+    return dataset
+
+
+def create_loaders(dataset, 
+                batch_size, 
+                train_size=0.8, 
+                test_size=0.2, 
+                dev_size=0, 
+                seed=42,):
+    '''  
+    take the input dataset 
+    create dataLoaders for training and testing loops
+
+    ****based on train/dev/test split, not for k-fold cross validation*** 
+    '''
 
     # split into train and test set size 
     train_size = int(train_size* len(dataset)) 
     test_size = len(dataset) - train_size 
 
-    print(f"Tokenizer model: {model} | Vocab Size: {vocab_size}")
     print(f"Training Set Size: {train_size} | Test Set Size: {test_size} News")
 
     # torch.utils.data.Subset object
@@ -93,8 +102,10 @@ def data_process(df:pd.DataFrame,
                             collate_fn=collate_fn,
                             shuffle=False
                             )
-    return train_loader, test_loader, vocab_size, train_size, test_size 
-
+    
+    
+    print(f"Train loader {len(train_loader)} batches | Test loader {len(test_loader)} batches")
+    return train_loader, test_loader, train_size, test_size 
 
 
 
@@ -131,4 +142,4 @@ def retrieve_info(df:pd.DataFrame):
     
 
 if __name__ == "__main__": 
-    data_process()
+    pass 

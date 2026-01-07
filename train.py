@@ -11,13 +11,12 @@ Training takes a few steps:
     4 (Optional). Save model weights based for future inferences (load pretrained model is done this way)
 '''
 
-from data.data_load import process_dataset, load_data 
+
 from model.rnn import LSTM
 import torch  
 import torch.nn as nn 
 from utils import * 
 from evaluator import test_loop 
-from data.feature_pruning import chi_square_pruning, save_selected_features, prune_dataset, handle_pruning
 import settings 
 
 ''' 
@@ -31,15 +30,11 @@ Another way of looking at underfitting is our likelihood approximation doesn't m
 hyperparams = settings.hyperparams  
 
 def train_loop(train_loader, test_loader, train_size, test_size, 
-               vocab_size, 
             test=False, 
             validate_epoch=True,
             plot_train_loss=False, 
             plot_test_loss= False, 
             save_weights=False,
-            tokenizer_model= "bert-base-cased",
-            pretrain_embed= None, 
-            pruning=False 
             ): 
     '''  
     @param test: if we do testing after the training is completed (one time) 
@@ -49,7 +44,10 @@ def train_loop(train_loader, test_loader, train_size, test_size,
     @param plot_test_loss: plot the change in test loss
     '''
    
-    hyperparams["tokenizer_model"]= tokenizer_model 
+    vocab_size = hyperparams["vocab_size"]
+    tokenizer_model = hyperparams["tokenizer_model"]
+    pretrain_embed= hyperparams["pretrain_embed"]
+
 
     embed_weights=None 
     if (pretrain_embed=="bert-base-cased"): 
@@ -79,6 +77,7 @@ def train_loop(train_loader, test_loader, train_size, test_size,
     
     # training 
     for i in range(hyperparams["epochs"]):
+        print(f"Epoch {i+1}:") 
         epoch_loss=0 
         correct =0 
         model.train()   # start training mode  
@@ -105,9 +104,9 @@ def train_loop(train_loader, test_loader, train_size, test_size,
         if (validate_epoch):
             test_loss = test_loop(test_loader, model, criterion)
             test_acc= compute_accuracy(model, test_loader)
-            print(f"Epoch {i+1}:\n\tAvg Train Loss: {round(epoch_loss/(len(train_loader)), 3)} | Train Accuracy: {train_acc} \n\tAvg Test Loss: {test_loss} | Test Accuracy: {test_acc}")
+            print(f"\tAvg Train Loss: {round(epoch_loss/(len(train_loader)), 3)} | Train Accuracy: {train_acc} \n\tAvg Test Loss: {test_loss} | Test Accuracy: {test_acc}")
         else: 
-            print(f"Epoch {i+1}:\n\tAvg Train Loss: {round(epoch_loss/(len(train_loader)), 3)} | Train Accuracy: {train_acc}")
+            print(f"\tAvg Train Loss: {round(epoch_loss/(len(train_loader)), 3)} | Train Accuracy: {train_acc}")
             
     
     if (test and not validate_epoch):

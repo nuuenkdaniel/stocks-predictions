@@ -60,8 +60,6 @@ def process_dataset(df:pd.DataFrame,
 
     # take non-torch.Tensor and create a dataset 
     dataset= SentimentDataset(news, sentiment, model) 
-    vocab_size= dataset.get_vocab_size()
-    print(f"Tokenizer model: {model} | Vocab Size: {vocab_size}")
     return dataset
 
 

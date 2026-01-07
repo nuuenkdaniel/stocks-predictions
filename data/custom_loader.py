@@ -54,8 +54,10 @@ class SentimentDataset(Dataset):
 def collate_fn(batch): 
     '''  
     dynamic padding for each batch (done when we are creating the dataLoader)
-    @param batch: the batch (array) of data that's returned from SentimentDataset's getItem function 
+    @param batch: 
+        - the batch (array) of data that's returned from SentimentDataset's getItem function 
         - batch_size number of (token_ids, label)
+        - each token_id is the encoded version of the words 
 
     Find the longest sentence in the batch, and pad every other sentence to the longest length with PAD token 
     '''

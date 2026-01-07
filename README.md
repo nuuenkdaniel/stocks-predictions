@@ -10,10 +10,12 @@
 
 
 ## Next Steps 
-- [ ] repeating experiments to validate performance using K-fold validation 
 - [ ] compare embedding vector values of semantically related words at different model configs 
-- [ ] design interface to input any text and output prediction ("launch" the model)
+- [ ] Model deployment: design interface to input any text and output prediction ("launch" the model)
 
+
+## Features Implemented 
+- Feature pruning 
 
 
 ## Models 

@@ -22,3 +22,5 @@ hyperparams= {
 
 }
 
+# random seed for reproducibility of experiments 
+seed=42 

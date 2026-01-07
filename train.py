@@ -21,7 +21,7 @@ import torch.nn as nn
 import time 
 from utils import * 
 from evaluator import test_loop 
-from data.feature_pruning import chi_square_pruning, save_selected_features
+from data.feature_pruning import chi_square_pruning, save_selected_features, prune_dataset
 import model.tokenizers as tokenizers 
 
 # here holds the hyperparameters for our model (global variable for our design)
@@ -75,6 +75,7 @@ def train_loop(test=False,
     # pruning 
     if (pruning): 
         selected_features=chi_square_pruning(df)
+        df= prune_dataset(df, selected_features)
         hyperparams["selected_feature"]= ""
     
 

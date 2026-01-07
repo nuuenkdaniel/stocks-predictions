@@ -2,3 +2,9 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd 
+
+
+checkpoints/
+
+data/csv_files 
+saved_dictionaries/

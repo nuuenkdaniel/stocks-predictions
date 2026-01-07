@@ -8,7 +8,7 @@ from .custom_loader import SentimentDataset, collate_fn
 
 def load_data(load_agreements=False): 
     '''
-    return the path to the dataset which can be loaded and processed in diffrent file 
+    return the DataFrame to the dataset which can be loaded and processed in diffrent file 
 
     the dataset contains data (text) and its labels 
     and the files of sentences which have different agreements (FinancialPhraseBank)
@@ -22,50 +22,60 @@ def load_data(load_agreements=False):
     # directory of ['Sentences_66Agree.txt', 'Sentences_AllAgree.txt', 'Sentences_50Agree.txt', 'README.txt', 'License.txt', 'Sentences_75Agree.txt']
     agreement_path = os.path.join(path, "FinancialPhraseBank")
     
-    if (load_agreements): 
-        return data_path, agreement_path
-    else:
-        return data_path, None  
-    
-
-def data_process(batch_size, train_size=0.8, test_size=0.2, seed=42, load_agreements=False): 
-    '''
-    Process the data to be trainable 
-    return the completed data in array format  
-
-    @param load_agreement: whether to load and process data that has different agreement levels 
-    '''
-    
-    # load data 
-    data_path, agreement_path = load_data(load_agreements)
-
-    # col 0: labels (neural, positive, negative)
+     # col 0: labels (neural, positive, negative)
     # col 1: news text 
     # 4846 x 2 
     # 2879 neutral, 1363 positive, 604 negative 
     # longest news: 315 words 
     # shortest news: 9 words 
-    df = pd.read_csv(data_path, encoding='latin-1', header=None, names=["sentiment", "news"]) 
+    train_df= pd.read_csv(data_path, encoding='latin-1', header=None, names=["sentiment", "news"])  
+    agreement_df=None 
+    
+    if (load_agreements): 
+        agreement_df= pd.read_csv(agreement_path, encoding='latin-1', header=None, names=["sentiment", "news"]) 
+        
+    return train_df, agreement_df   
+    
+
+
+def data_process(df:pd.DataFrame, 
+                 batch_size, 
+                 train_size=0.8, 
+                 test_size=0.2, 
+                 seed=42, 
+                 model = "bert-base-cased", 
+                 load_agreements=False): 
+    '''
+    Process the data to be trainable (dataset and dataLoader)
+    return the completed data in array format  
+
+    @param load_agreement: whether to load and process data that has different agreement levels 
+    @param pruned_df: DataFrame of the original dataset after feature pruning 
+    '''
+    header = df.columns.tolist()
+    assert("sentiment" in header and "news" in header)
 
     # transform sentiment to numerical value 
     # neutral: 0, neg: 1, pos: 2 
-    label_map= {"neutral":0, "positive":2, "negative":1}
+    label_map= {"neutral":0, "negative":1, "positive":2}
     sentiment= (df["sentiment"].map(label_map))
     sentiment = sentiment.tolist() 
     news= (df["news"].tolist()) 
 
     # take non-torch.Tensor and create a dataset 
-    dataset= SentimentDataset(news, sentiment) 
+    dataset= SentimentDataset(news, sentiment, model) 
     vocab_size= dataset.get_vocab_size() 
 
     # split into train and test set size 
     train_size = int(train_size* len(dataset)) 
     test_size = len(dataset) - train_size 
 
+    print(f"Tokenizer model: {model} | Vocab Size: {vocab_size}")
     print(f"Training Set Size: {train_size} | Test Set Size: {test_size} News")
 
     # torch.utils.data.Subset object
     # calls __getItem__, so it's a tuple of (token_ids, label) in torch tensor  
+    # same split with the same seed 
     train_set, test_set =  random_split(dataset, 
                                     [train_size, test_size], 
                                     generator=torch.Generator().manual_seed(seed) # reproducibility with manual seed
@@ -76,20 +86,20 @@ def data_process(batch_size, train_size=0.8, test_size=0.2, seed=42, load_agreem
                             batch_size=batch_size, 
                             collate_fn=collate_fn, 
                             num_workers=2, 
-                            shuffle=False   # don't shuffle for training
+                            shuffle=True   # shuffle training to prevent the model learning the order of the training data 
                             )
     test_loader= DataLoader(test_set,
                             batch_size=batch_size,
                             collate_fn=collate_fn,
-                            shuffle=True
+                            shuffle=False
                             )
     return train_loader, test_loader, vocab_size, train_size, test_size 
 
 
-    
 
 
-    ''' 
+
+def retrieve_info(df:pd.DataFrame): 
     # iterate thorugh dataset to get additional info 
     neutral= 0 
     positive=0 
@@ -118,7 +128,6 @@ def data_process(batch_size, train_size=0.8, test_size=0.2, seed=42, load_agreem
     print(f"Longest news length: {max_length}")
     print(max_news)
     print(f"shortest news length: {min_length}")
-    ''' 
     
 
 if __name__ == "__main__": 

@@ -1,4 +1,3 @@
-# tokenizer for our dataset 
 # a tokenizer is used to split a group of words into subwords (parts)
 # a correct word is split into itself, but unusual/made-up words/mispelled words will be broken into differnt parts 
 # a pretrained tokenizer is the best since it's trained to split words better than others 
@@ -9,7 +8,7 @@ This file may not be used in main code, but as tests
 
 from transformers import AutoTokenizer 
 
-def init_tokenizer(model="bert-base-uncased"): 
+def init_tokenizer(model="bert-base-cased"): 
     '''
     initialize the chosen pretrained tokenizer 
     '''
@@ -48,7 +47,18 @@ def tokenize(text:str, tokenizer):
 
     return encoded["input_ids"]
     
+def detokenize(token_ids, tokenizer): 
+    '''  
+    convert tokenized_id back to text 
+    '''
+    return tokenizer.decode(token_ids, skip_special_tokens=True)
+
+
 
 if __name__ == "__main__":
     tokenizer= init_tokenizer()
-    tokenize("What is this? I want to go home!!!", tokenizer)
+    #print(tokenize("Hello", tokenizer))
+    print(detokenize(101, tokenizer))
+    print(detokenize(102, tokenizer))
+    print(detokenize(8667, tokenizer))
+    print(detokenize(100, tokenizer))

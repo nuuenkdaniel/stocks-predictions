@@ -12,11 +12,12 @@ from transformers import AutoTokenizer
 from torch.nn.utils.rnn import pad_sequence
 
 class SentimentDataset(Dataset): 
-    def __init__(self, text, labels, model="bert-base-uncased"):
+    def __init__(self, text, labels, model="bert-base-cased"):
         '''  
         @param text: all texts we want to be processed from the dataset 
         @param labels: corresponding labels of the dataset 
         '''
+        
         self.tokenizer= AutoTokenizer.from_pretrained(model) 
         self.text= text 
         self.labels= labels 

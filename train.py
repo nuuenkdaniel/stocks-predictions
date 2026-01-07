@@ -21,7 +21,7 @@ import torch.nn as nn
 import time 
 from utils import * 
 from evaluator import test_loop 
-from data.feature_pruning import chi_square_pruning, save_selected_features, prune_dataset
+from data.feature_pruning import chi_square_pruning, save_selected_features, prune_dataset, handle_pruning
 import model.tokenizers as tokenizers 
 
 # here holds the hyperparameters for our model (global variable for our design)
@@ -37,7 +37,9 @@ hyperparams= {
     "dropOut": 0.5,     # reduce overfitting by randomly setting neurons to 0 weight 
     "weight_decay": 1e-5, 
     "l1_lambda": 0.000001, 
-    "model": "LSTM"
+    "model": "LSTM", 
+    "k_pruning": 4000,  # number of words to keep during chi-square pruning 
+
 }
 
 ''' 
@@ -70,13 +72,14 @@ def train_loop(test=False,
     # (token_ids, labels, lengths) 
     # batch_size x max_seq_len 
     start_time= time.time() 
-    df = load_data() 
+    df, _ = load_data() 
+
 
     # pruning 
+    hyperparams["selected_feature"]= ""
     if (pruning): 
-        selected_features=chi_square_pruning(df)
-        df= prune_dataset(df, selected_features)
-        hyperparams["selected_feature"]= ""
+        feature_path = handle_pruning(df, k=hyperparams["k_pruning"])
+        hyperparams["selected_feature"]= feature_path 
     
 
     train_loader, test_loader, vocab_size, train_size, test_size= data_process(df, batch_size=hyperparams["batch_size"], model=tokenizer_model)
@@ -159,8 +162,8 @@ def train_loop(test=False,
 
 if __name__ == "__main__":
     train_loop(validate_epoch=True,
-               pruning=True, 
+               pruning=False, 
                 tokenizer_model=tokenizers.models["bert-cased"], 
                 pretrain_embed=tokenizers.models["bert-cased"], 
-                save_weights=True 
+                save_weights=False  
                 ) 

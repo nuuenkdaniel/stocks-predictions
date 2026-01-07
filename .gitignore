@@ -7,3 +7,4 @@ __pycache__/
 checkpoints/
 
 data/csv_files 
+saved_dictionaries/

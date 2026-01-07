@@ -2,15 +2,16 @@
 functions that implement feature pruning during data processing stage (pre-training)
 '''
 
-import json 
+import json, os 
 import pandas as pd 
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.feature_extraction.text import CountVectorizer
+from utils import get_timestamp, create_path 
 
 
 def chi_square_pruning(df:pd.DataFrame, 
                        min_df=2, 
-                       k=2000): 
+                       k=3000): 
     '''  
     feature pruning with chi-square test, keep the words with the highest score 
     '''
@@ -58,17 +59,33 @@ def prune_dataset(df:pd.DataFrame, selected_features):
     df["news"]= df["news"].apply(prune)
     return
 
-def save_selected_features(selected_features):
+def save_selected_features(selected_features, path):
     '''
     save the selected features from different pruning methods 
     ''' 
-
+    with open(path, "w") as f: 
+        json.dump(list(selected_features), f)
     print("---Selected Features/Dictionary Saved----")
+    return 
 
 
 def load_selected_features(path): 
     '''  
     load the selected dictionary 
     '''
-    pass 
+    with open(path,"r") as f:
+        loaded = set(json.load(f))
+    return loaded 
+
+
+def handle_pruning(df:pd.DataFrame, k=3000, min_df=2): 
+    selected_features=chi_square_pruning(df, min_df=min_df, k=k)
+    prune_dataset(df, selected_features)
+
+    # save and return path to the dictionary 
+    path = create_path(folderName="saved_dictionaries", fileName=f"k={k} min_df={min_df} Chi-Square Prune.json")
+    
+    if (not os.path.exists(path)):
+        save_selected_features(selected_features, path)
+    return path 
 

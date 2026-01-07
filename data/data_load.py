@@ -33,8 +33,8 @@ def load_data(load_agreements=False):
     
     if (load_agreements): 
         agreement_df= pd.read_csv(agreement_path, encoding='latin-1', header=None, names=["sentiment", "news"]) 
-    else:
-        return train_df, agreement_df   
+        
+    return train_df, agreement_df   
     
 
 

@@ -10,37 +10,15 @@ Training takes a few steps:
         - log/store training related information that you want 
     4 (Optional). Save model weights based for future inferences (load pretrained model is done this way)
 '''
-import os 
-# disable parallelization of tokenizer for DataLoader parallelization 
-os.environ["TOKENIZERS_PARALLELISM"]= "false"  
 
 from data.data_load import data_process, load_data 
 from model.rnn import LSTM
 import torch  
 import torch.nn as nn 
-import time 
 from utils import * 
 from evaluator import test_loop 
 from data.feature_pruning import chi_square_pruning, save_selected_features, prune_dataset, handle_pruning
-import model.tokenizers as tokenizers 
-
-# here holds the hyperparameters for our model (global variable for our design)
-# these parameters are mainly for model training (constructor params, training loop)
-hyperparams= {
-    "n_layers": 1, 
-    "hidden_dim": 32,  # usually multiple of 2 
-    "embed_dim": 32, 
-    "output_dim": 3,    # we have 3 classes of labels to predict (neutral, pos, neg)
-    "epochs": 8,        # number of times the model trains over the entire set 
-    "batch_size": 64,   # batch size of each data training batch 
-    "learning_rate": 0.001,  # learning rate of gradient descent 
-    "dropOut": 0.5,     # reduce overfitting by randomly setting neurons to 0 weight 
-    "weight_decay": 1e-5, 
-    "l1_lambda": 0.000001, 
-    "model": "LSTM", 
-    "k_pruning": 4000,  # number of words to keep during chi-square pruning 
-
-}
+import settings 
 
 ''' 
 hidden dim, embed_dim and n_layer determine our model complexity (same as # of trainable parameters the model has)
@@ -50,6 +28,7 @@ Overfitting is when we have big model/a lot of training for small amount of data
 underfitting is when the model is too simple to fit all the data (think of a straight line going across data split at different locations of this linear line), it doesn't perform well. 
 Another way of looking at underfitting is our likelihood approximation doesn't match the correct Gaussian distribution that generates this data (high bias)
 '''
+hyperparams = settings.hyperparams  
 
 def train_loop(test=False, 
             validate_epoch=False,
@@ -71,7 +50,6 @@ def train_loop(test=False,
     # create the data 
     # (token_ids, labels, lengths) 
     # batch_size x max_seq_len 
-    start_time= time.time() 
     df, _ = load_data() 
 
 
@@ -90,6 +68,7 @@ def train_loop(test=False,
 
     embed_weights=None 
     if (pretrain_embed=="bert-base-cased"): 
+        assert(pretrain_embed == tokenizer_model)
         print(f"Using saved embedding weights: {pretrain_embed}")
         embed_weights= extract_bert_weight()
 
@@ -156,14 +135,3 @@ def train_loop(test=False,
         save_model(model, hyperparams, pretrain_embed, test_acc,
                 name=f"{hyperparams["epochs"]} Epochs {hyperparams['model']} Test Acc={test_acc} Train Acc= {train_acc} | {timestamp}.pt") 
 
-    end_time= time.time() 
-    print(f"Total Program Execution Time (min): {round((end_time-start_time)/60, 3)}")
-
-
-if __name__ == "__main__":
-    train_loop(validate_epoch=True,
-               pruning=False, 
-                tokenizer_model=tokenizers.models["bert-cased"], 
-                pretrain_embed=tokenizers.models["bert-cased"], 
-                save_weights=False  
-                ) 

@@ -102,16 +102,14 @@ def train_loop(train_loader, test_loader, train_size, test_size,
         train_acc= round(correct/train_size, 3)
 
         if (validate_epoch):
-            test_loss = test_loop(test_loader, model, criterion)
-            test_acc= compute_accuracy(model, test_loader)
+            test_loss, test_acc = test_loop(test_loader, model, criterion)
             print(f"\tAvg Train Loss: {round(epoch_loss/(len(train_loader)), 3)} | Train Accuracy: {train_acc} \n\tAvg Test Loss: {test_loss} | Test Accuracy: {test_acc}")
         else: 
             print(f"\tAvg Train Loss: {round(epoch_loss/(len(train_loader)), 3)} | Train Accuracy: {train_acc}")
             
     
     if (test and not validate_epoch):
-        test_loss= test_loop(test_loader, model, criterion)
-        test_acc= compute_accuracy(model, test_loader)
+        test_loss, test_acc= test_loop(test_loader, model, criterion)
         print(f"Test Loss: {test_loss} | Test Accuracy: {test_acc}")
 
     if (save_weights):

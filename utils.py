@@ -86,13 +86,6 @@ def get_timestamp():
     timestamp = datetime.now().strftime("%m-%d_%H-%M")
     return timestamp
 
-def calcualte_epoch(E_old, N_old, N_new): 
-    '''  
-    find number of epochs for training while keeping the number of total iterations the same 
-
-    E_new = E_old * (Number of samples trained before)/ (Number of samples to be trained)
-    '''
-    pass 
 
 
 if __name__ == "__main__":
